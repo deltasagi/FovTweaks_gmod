@@ -1,0 +1,1 @@
+include("fovmod/init.lua")
