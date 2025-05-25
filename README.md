@@ -1,4 +1,4 @@
-# FovTweaks
+# FovTweaks (first mod)
 
 ## Info
 this mod gives some pretty cool fov tweaks to gmod, aiming to just make the game feel a little more modern.
