@@ -48,10 +48,9 @@ hook.Add("CalcView", "fovtweaks_combinedfov", function(ply, pos, angles, fov)
         end
     end
 
-    -- Smoothly interpolate FOV based on velocity
     if sprintenabled_convar:GetBool() and CurTime() > impacttime then
         local vel = ply:GetVelocity():Length2D()
-        local minVel, maxVel = 0, 400 -- You can tweak maxVel for when FOV is fully sprint
+        local minVel, maxVel = 0, 400
         local frac = math.Clamp((vel - minVel) / (maxVel - minVel), 0, 1)
         targetfov = Lerp(frac, normalfov, sprintfov)
     end
