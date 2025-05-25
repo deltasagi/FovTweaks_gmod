@@ -19,6 +19,20 @@ hook.Add("CalcView", "fovtweaks_combinedfov", function(ply, pos, angles, fov)
     local sprintfov = sprintfov_convar:GetFloat()
     local targetfov = normalfov
 
+    function FovTweaks_ResetFOV()
+        currentfov = normalfov_convar:GetFloat()
+        lasthealth = 0
+        impacttime = 0
+    end
+
+    if ply:IsPlayer() and ply:InVehicle() then FovTweaks_ResetFOV() return end
+    if not ply:Alive() then FovTweaks_ResetFOV() return end
+    local wep = ply:GetActiveWeapon()
+    if IsValid(wep) and wep:GetClass() == "gmod_camera" then
+        FovTweaks_ResetFOV()
+        return
+    end
+
     if damageenabled_convar:GetBool() then
         if health < lasthealth then
             local damage = lasthealth - health
@@ -34,10 +48,12 @@ hook.Add("CalcView", "fovtweaks_combinedfov", function(ply, pos, angles, fov)
         end
     end
 
+    -- Smoothly interpolate FOV based on velocity
     if sprintenabled_convar:GetBool() and CurTime() > impacttime then
-        if ply:KeyDown(IN_SPEED) and ply:GetVelocity():Length2D() > 10 then
-            targetfov = sprintfov
-        end
+        local vel = ply:GetVelocity():Length2D()
+        local minVel, maxVel = 0, 400 -- You can tweak maxVel for when FOV is fully sprint
+        local frac = math.Clamp((vel - minVel) / (maxVel - minVel), 0, 1)
+        targetfov = Lerp(frac, normalfov, sprintfov)
     end
 
     currentfov = Lerp(FrameTime() * fovreturnspeed, currentfov, targetfov)
