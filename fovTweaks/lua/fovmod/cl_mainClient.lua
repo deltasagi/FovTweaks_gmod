@@ -1,12 +1,11 @@
-local normalfov_convar = CreateClientConVar("fovtweaks_normalfov", "90", true, false, "")
 local damageenabled_convar = CreateClientConVar("fovtweaks_damagefov_enable", "1", true, false, "")
 local sprintenabled_convar = CreateClientConVar("fovtweaks_sprintfov_enable", "1", true, false, "")
-local sprintfov_convar = CreateClientConVar("fovtweaks_sprintfov", "105", true, false, "")
-local minimpactfov = 60
+local sprintfov_convar = CreateClientConVar("fovtweaks_sprintfov", "15", true, false, "") -- now an offset, not an absolute value
+local minimpactfov_offset = -30 -- how much to reduce FOV on max damage
 local impactduration = 0.05
 local fovreturnspeed = 3
 
-local currentfov = normalfov_convar:GetFloat()
+local currentfov_offset = 0
 local lasthealth = 0
 local impacttime = 0
 
@@ -15,12 +14,11 @@ hook.Add("CalcView", "fovtweaks_combinedfov", function(ply, pos, angles, fov)
 
     local health = ply:Health()
     local maxhealth = ply:GetMaxHealth()
-    local normalfov = normalfov_convar:GetFloat()
-    local sprintfov = sprintfov_convar:GetFloat()
-    local targetfov = normalfov
+    local sprintfov_offset = sprintfov_convar:GetFloat()
+    local targetfov_offset = 0
 
-    function FovTweaks_ResetFOV()
-        currentfov = normalfov_convar:GetFloat()
+    local function FovTweaks_ResetFOV()
+        currentfov_offset = 0
         lasthealth = 0
         impacttime = 0
     end
@@ -37,14 +35,14 @@ hook.Add("CalcView", "fovtweaks_combinedfov", function(ply, pos, angles, fov)
         if health < lasthealth then
             local damage = lasthealth - health
             local damagefrac = math.Clamp(damage / maxhealth, 0, 1)
-            local impactfov = normalfov - (normalfov - minimpactfov) * damagefrac
-            currentfov = impactfov
+            local impactfov_offset = minimpactfov_offset * damagefrac
+            currentfov_offset = impactfov_offset
             impacttime = CurTime() + impactduration
         end
         lasthealth = health
 
         if CurTime() < impacttime then
-            targetfov = currentfov
+            targetfov_offset = currentfov_offset
         end
     end
 
@@ -52,13 +50,14 @@ hook.Add("CalcView", "fovtweaks_combinedfov", function(ply, pos, angles, fov)
         local vel = ply:GetVelocity():Length2D()
         local minVel, maxVel = 0, 400
         local frac = math.Clamp((vel - minVel) / (maxVel - minVel), 0, 1)
-        targetfov = Lerp(frac, normalfov, sprintfov)
+        targetfov_offset = Lerp(frac, 0, sprintfov_offset)
     end
 
-    currentfov = Lerp(FrameTime() * fovreturnspeed, currentfov, targetfov)
+    currentfov_offset = Lerp(FrameTime() * fovreturnspeed, currentfov_offset, targetfov_offset)
     return {
         origin = pos,
         angles = angles,
-        fov = currentfov
+        fov = fov + currentfov_offset
     }
 end)
+--hopefully this adds more compatibility :)
